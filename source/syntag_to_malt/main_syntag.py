@@ -3,28 +3,41 @@ from syntagrus import Reader
 import glob, os
 from clint.textui import progress
 
-selected_feat = {'m', 'f', 'n', 'sg', 'pl', '1p', '2p', '3p', 'nom', 'gen', 'gen2', 'dat', 'acc', 'ins', 'prep',
-                 'loc', 'real', 'imp', 'pass', 'comp', 'shrt'}
+# в скобочках указываются параметры которые определены по определению для русского языка.
+# * те параметры которые по каким либо причинам не являются важными хотя они есть в SyntagRus.
+# ** те параметры которые просто не учитываются в SyntagRus, но они есть pymorphy2.
+selected_feat = {'m', 'f', 'n', # род(муж, жен, средний, общий**)
+				 'sg', 'pl', # число(ед, мн)
+				 '1p', '2p', '3p', # лицо(1-ое, 2-ое, 3-ье)
+				 'nom', 'gen', 'gen2', 'dat', 'acc', 'ins', 'prep', 'loc', # падежи. gen2 партитивный падеж, loc - местный падеж более подробно pamjatka.
+				 'real', 'imp', # наклонение (изъяв, пов)
+				 'pass', # залог (страдательный)
+				 'comp', # степень(сравнительная, превосходная) сравнения только сравнительная
+				 'shrt' # краткость (прилагательные, причастия)
+				 }
 
 
 if __name__ == '__main__':
     """
     # simple example:
-    # python3 main_syntag.py -p /path/to/folder -n 10
+    # ================================================
+    #   python3 main_syntag.py -p /path/to/folder -n 10
+    # ================================================
     # folder should contain another inner folder and in them should be *.tgt files
     # # example:
-    #   /..../SyntagRus/*/*.tgt path should be /..../SyntagRus
+    #   /..../SyntagRus/*/*.tgt path should be /..../SyntagRus/
     #   Directory structure
+    #   .....
     #       SyntagRus
     #           + info
     #               test.tgt
     #           + info2
-    # # if everything ok, result should be in res directory
+    # # if everything ok, result should be in res directory file model.txt
     #
     # # Problems:
-    # if you have this problem start script in debug mode
+    # if you have this problem
     # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xcb in position 95: invalid continuation byte
-    # use
+    # start script in debug mode
     """
     parser = OptionParser()
     parser.add_option('-d', '--debug', action='store_true', dest='debug', help='debug mode', default=False)
@@ -47,7 +60,7 @@ if __name__ == '__main__':
     step = step if step > 0 else 1
 
     with progress.Bar(label="Progress", expected_size=limit) as bar:
-        for file in files[0:limit]:
+        for file in files[: limit]:
             if not options.debug:
                 if i % step or i + 1 == limit:
                     bar.show(i + 1)
@@ -66,7 +79,10 @@ if __name__ == '__main__':
                     d = str(word[1].dom)
                     _out_sentence.append('\t'.join([w, p, d, l]))
                 out_sentences.append('\n'.join(_out_sentence))
-            out_file.write("\n\n".join(out_sentences))
+            end_file = "\n\n"
+            if i == limit or i == len(files):
+                end_file = ""
+            out_file.write("\n\n".join(out_sentences) + end_file)
             del (R)
             del (out_sentences)
 
