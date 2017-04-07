@@ -59,6 +59,7 @@ class RefTextSentenceParser:
             sentence_position += 1
 
         package_path = self._package_path + '/tmp/maltparser'
+
         self.sentence_parser.write_data(self._sentences, self._file_name_txt, package_path)
         self.write_pronounces()
 
@@ -153,12 +154,19 @@ class RefTextSentenceParser:
         return word_parent
 
     def write_anaphora(self):
-        out_file = open(self._package_path + '/tmp/anaphora/' + self._file_name_json, 'w')
+        out_file_package = self._package_path + '/tmp/anaphora/'
+        if not os.path.exists(out_file_package):
+            os.makedirs(out_file_package)
+
+        out_file = open(out_file_package + self._file_name_json, 'w')
         json.dump(self._anaphora_relationship, out_file)
         out_file.close()
 
     def write_pronounces(self):
-        out_file = open(self._package_path + '/tmp/pronouns/' + self._file_name_json, 'w')
+        out_file_package = self._package_path + '/tmp/pronouns/'
+        if not os.path.exists(out_file_package):
+            os.makedirs(out_file_package)
+        out_file = open(out_file_package + self._file_name_json, 'w')
         json.dump(self._pronounces, out_file)
         out_file.close()
 

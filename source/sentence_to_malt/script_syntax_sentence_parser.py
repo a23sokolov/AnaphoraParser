@@ -11,6 +11,9 @@ def parse_text(input_file, output_file, path_maltparser):
 
 if __name__ == '__main__':
     file_name = 'test.txt'
-    input_file = os.getcwd() + '/result/' + file_name
-    output_file = os.getcwd() + '/res_maltparser/' + file_name
+    input_file = os.getcwd() + '/tmp/result/' + file_name
+    package_path = os.getcwd() + '/tmp/res_maltparser/'
+    if not os.path.exists(package_path):
+        os.makedirs(package_path)
+    output_file = package_path + file_name
     parse_text(input_file, output_file, PATH_MALTPARSER)

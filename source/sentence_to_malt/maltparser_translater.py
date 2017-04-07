@@ -3,8 +3,10 @@ import re
 from collections import namedtuple
 import pymorphy2 # @todo: add in requirements
 import sys
+import os
 sys.path.append('..')
 from config import npro_sample
+
 
 normalize_speech_part = {
     # части речи
@@ -108,7 +110,7 @@ class SentenceParser:
     def __init__(self, input_package='articles', out_package='result'):
         self._morphAnalyzer = pymorphy2.MorphAnalyzer()
         self._input_package = input_package
-        self._output_package = out_package
+        self._output_package = os.getcwd() +'/tmp/' + out_package
 
     def parse(self, opened_file):
         data = json.load(opened_file)
@@ -185,6 +187,8 @@ class SentenceParser:
 
 
     def _write_external_file(self):
+        if not os.path.exists(self._output_package):
+            os.makedirs(self._output_package)
         out_file = open(self._output_package + '/' + self._file_name, 'w')
 
         out_sentences = []
@@ -202,36 +206,25 @@ class SentenceParser:
         return ('\t'.join([w, p]))
 
     def read_malttab(self, opened_file):
-        # _content = opened_file.readlines()
-        # return list(map(self._parse_word_malt_tab, _content))
 
         _content = opened_file.readlines()
-        # _words = []
         _sentences = []
         _sentence = []
-        # _sentence_position = []
         position = 0
         start_pos = 0
-        # _sentence_position.append(position)
         for word in _content:
             position += 1
             if '\n' == word:
                 sent_obj = ParsedSentence(_sentence, start_pos, position - 1)
                 start_pos = position + 1
                 _sentences.append(sent_obj)
-                # _sentence_position.append(position + 1)
-                # _sentences.append(_sentence)
                 _sentence = []
                 continue
             res_word = (self._parse_word_malt_tab(word))
             _sentence.append(res_word)
-            # _words.append(res_word)
-        # print('\n'.join(list(map(lambda x: str(x) , _sentences))))
-        # return _words, _sentences, _sentence_position
         return _sentences
 
     def _parse_word_malt_tab(self, word_malt_tab):
-        # return word_malt_tab.strip().split('\t')
         word = {}
         _word = word_malt_tab.strip().split('\t')
         word['word'] = _word[0]

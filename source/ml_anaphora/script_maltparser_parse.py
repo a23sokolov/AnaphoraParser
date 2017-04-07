@@ -11,6 +11,10 @@ def parse_text(input_file, output_file, path_maltparser):
 
 def exec_command(file_name):
     input_file = os.getcwd() + '/tmp/maltparser/' + file_name
+
+    package_path = os.getcwd() + '/tmp/res_maltparser/'
+    if not os.path.exists(package_path):
+        os.makedirs(package_path)
     output_file = os.getcwd() + '/tmp/res_maltparser/' + file_name
     parse_text(input_file, output_file, PATH_MALTPARSER)
 
