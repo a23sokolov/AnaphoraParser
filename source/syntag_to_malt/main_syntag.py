@@ -1,7 +1,10 @@
-from optparse import OptionParser
+from optparse import OptionParser # @todo: add in requirements
 from syntagrus import Reader
 import glob, os
-from clint.textui import progress
+import sys
+sys.path.append('..')
+from config import PATH_SYNTAGRUS
+from clint.textui import progress # @todo: add in requirements
 
 # в скобочках указываются параметры которые определены по определению для русского языка.
 # * те параметры которые по каким либо причинам не являются важными хотя они есть в SyntagRus.
@@ -16,7 +19,7 @@ selected_feat = {'m', 'f', 'n', # род(муж, жен, средний, общ�
 				 'shrt' # краткость (прилагательные, причастия)
 				 }
 
-
+# get file with SyntagRus format and translate it to malttab format for training classifier
 if __name__ == '__main__':
     """
     # simple example:
@@ -45,15 +48,18 @@ if __name__ == '__main__':
     parser.add_option('-n', '--number', action='store', dest='number', type='int', help='number of files to process')
     (options, args) = parser.parse_args()
 
+    path = options.path
     if not options.path:
-        print('Specify path')
-        exit()
+        print('Will be used path from config')
+        path = PATH_SYNTAGRUS
 
-    out_file = open("../../res/model.txt", "w")
+    out_file = open("result/model.txt", "w")
     current_path = os.getcwd()
-    os.chdir(options.path)
-    files = glob.glob('*/*.tgt')
+    os.chdir(path + '/news')
+    print(str(path + '/news/'))
+    files = glob.glob('*.tgt')
     limit = options.number if options.number else len(files)
+    print(len(files))
 
     i = 0
     step = (int)(0.05 * limit)
