@@ -19,54 +19,62 @@ selected_feat = {'m', 'f', 'n', # род(муж, жен, средний, общ�
 				 'shrt' # краткость (прилагательные, причастия)
 				 }
 
+package_to_learn = []
+
 # get file with SyntagRus format and translate it to malttab format for training classifier
-if __name__ == '__main__':
+def main():
     """
-    # simple example:
-    # ================================================
-    #   python3 main_syntag.py -p /path/to/folder -n 10
-    # ================================================
-    # folder should contain another inner folder and in them should be *.tgt files
-    # # example:
-    #   /..../SyntagRus/*/*.tgt path should be /..../SyntagRus/
-    #   Directory structure
-    #   .....
-    #       SyntagRus
-    #           + info
-    #               test.tgt
-    #           + info2
-    # # if everything ok, result should be in res directory file model.txt
-    #
-    # # Problems:
-    # if you have this problem
-    # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xcb in position 95: invalid continuation byte
-    # start script in debug mode
-    """
+        # simple example:
+        # ================================================
+        #   python3 main_syntag.py -p /path/to/folder -n 10
+        # ================================================
+        # folder should contain another inner folder and in them should be *.tgt files
+        # # example:
+        #   /..../SyntagRus/*/*.tgt path should be /..../SyntagRus/
+        #   Directory structure
+        #   .....
+        #       SyntagRus
+        #           + info
+        #               test.tgt
+        #           + info2
+        # # if everything ok, result should be in res directory file model.txt
+        #
+        # # Problems:
+        # if you have this problem
+        # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xcb in position 95: invalid continuation byte
+        # start script in debug mode
+        """
     parser = OptionParser()
     parser.add_option('-d', '--debug', action='store_true', dest='debug', help='debug mode', default=False)
     parser.add_option('-p', '--path', action='store', dest='path', type='string', help='path to model')
     parser.add_option('-n', '--number', action='store', dest='number', type='int', help='number of files to process')
     (options, args) = parser.parse_args()
 
+    out_file_package = 'result'
+    if not os.path.exists(out_file_package):
+        os.makedirs(out_file_package)
+
+    out_file = open(out_file_package + "/model.txt", "w")
+
     path = options.path
     if not options.path:
         print('Will be used path from config')
         path = PATH_SYNTAGRUS
 
-    out_file = open("result/model.txt", "w")
-    current_path = os.getcwd()
-    os.chdir(path + '/news')
-    print(str(path + '/news/'))
-    files = glob.glob('*.tgt')
+    os.chdir(path)
+    print(str(path))
+    files = glob.glob('*/*.tgt')
     limit = options.number if options.number else len(files)
     print(len(files))
 
     i = 0
     step = (int)(0.05 * limit)
     step = step if step > 0 else 1
+    R = Reader()
 
     with progress.Bar(label="Progress", expected_size=limit) as bar:
         for file in files[: limit]:
+            print(file)
             if not options.debug:
                 if i % step or i + 1 == limit:
                     bar.show(i + 1)
@@ -93,4 +101,7 @@ if __name__ == '__main__':
             del (out_sentences)
 
     out_file.close()
+
+if __name__ == '__main__':
+    main()
 

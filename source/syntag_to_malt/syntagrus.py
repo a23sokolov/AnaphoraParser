@@ -82,7 +82,8 @@ class Reader:
 		self._parser = xml.parsers.expat.ParserCreate()
 		self._parser.StartElementHandler = self.start_element
 		self._parser.EndElementHandler = self.end_element
-		self._parser.CharacterDataHandler = self.char_data		
+		self._parser.CharacterDataHandler = self.char_data
+
 	
 	def start_element(self, name, attr):
 		if name == 'W':
