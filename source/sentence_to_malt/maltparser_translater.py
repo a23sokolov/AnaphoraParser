@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import re
 from collections import namedtuple
@@ -56,7 +57,7 @@ normalize_features = {
     'voct': 'nom',  # звательный	Его формы используются при обращении к человеку.	Саш, пойдем в кино.
     'gen2': 'gen', # второй родительный (частичный)	 	ложка сахару (gent - производство сахара); стакан яду (gent - нет яда)
     'acc2': 'acc',  # второй винительный	 	записался в солдаты
-    'loc2': 'loc', # второй предложный (местный)	 	я у него в долгу (loct - напоминать о долге); висит в шкафу (loct - монолог о шкафе); весь в снегу (loct - писать о снеге)
+    'loc2': 'prep', # второй предложный (местный)	 	я у него в долгу (loct - напоминать о долге); висит в шкафу (loct - монолог о шкафе); весь в снегу (loct - писать о снеге)
 
     # нестандартные грамемы
     'LATN': '', # Токен состоит из латинских букв (например, “foo-bar” или “Maßstab”)
@@ -108,7 +109,7 @@ word_t = namedtuple('word_t', [ 'lemma', 'pos', 'feat', 'NPRO'])
 END_LINE = '\n'
 
 class SentenceParser:
-    def __init__(self, input_package='articles', out_package='result'):
+    def __init__(self, input_package='articles', out_package='maltparser'):
         self._morphAnalyzer = pymorphy2.MorphAnalyzer()
         self._input_package = input_package
         self._output_package = os.getcwd() +'/tmp/' + out_package

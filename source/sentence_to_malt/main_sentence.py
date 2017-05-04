@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from maltparser_translater import SentenceParser
 
 # get file with default readeable format and translate it to malttab format to be parsed by classifier

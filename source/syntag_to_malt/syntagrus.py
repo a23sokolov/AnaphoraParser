@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import xml.parsers.expat
 from collections import namedtuple
 # в скобочках указываются параметры которые определены по определению для русского языка.

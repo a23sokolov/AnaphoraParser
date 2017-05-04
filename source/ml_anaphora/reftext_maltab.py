@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import glob, os
 import random
@@ -254,11 +255,11 @@ class DataToLearn:
     # morph
     #       [1] is S @todo: should depends on part of speech, right now ignored
     #       [1,0,0] is m, [0,1,0] is f, [0,0,1] is n @todo: should be ignored because filter decide this problem
-    #       [1,0,0,0,0,0,0] nom, [0,1,0,0,0,0,0] gen, [0,0,1,0,0,0,0] dat,
-    #       [0,0,0,1,0,0,0] acc, [0,0,0,0,1,0,0] ins, [0,0,0,0,0,1,0] prep, [0,0,0,0,0,0,1] loc
+    #       [1,0,0,0,0,0] nom, [0,1,0,0,0,0] gen, [0,0,1,0,0,0] dat,
+    #       [0,0,0,1,0,0] acc, [0,0,0,0,1,0] ins, [0,0,0,0,0,1] prep
     # syntax
     #       vector of 69 positions
-    # vector size 3 + 7 + 69 = 79 = FEATURES_SIZE
+    # vector size 3 + 6 + 69 = 78 = FEATURES_SIZE
     def vectorize_data(self, noun_candidate, anaphora_relationship):
         offset_distance = 0
         offset_case = 3
@@ -319,10 +320,12 @@ def main():
     files = glob.glob('*.json')
     print('files to learn = ' + str(len(files)))
     os.chdir(current_path)
-    for file in files:
+    for file in files[:4]:
         print(file)
         sentence_parser = RefTextSentenceParser(data_to_learn, output_package=current_path)
         sentence_parser.read(file)
+    print(os.getcwd())
+    os.chdir(current_path)
     data_to_learn.print_vector()
     main_classifier.simple_check(data_to_learn.train_matrix, data_to_learn.y_vector, 5)
 

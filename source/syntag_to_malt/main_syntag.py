@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from optparse import OptionParser # @todo: add in requirements
 from syntagrus import Reader
 import glob, os
@@ -55,6 +56,7 @@ def main():
         os.makedirs(out_file_package)
 
     out_file = open(out_file_package + "/model.txt", "w")
+    print(os.path.abspath(out_file_package + "/model.txt"))
 
     path = options.path
     if not options.path:
@@ -63,7 +65,7 @@ def main():
 
     os.chdir(path)
     print(str(path))
-    files = glob.glob('*/*.tgt')
+    files = glob.glob('*.tgt')
     limit = options.number if options.number else len(files)
     print(len(files))
 

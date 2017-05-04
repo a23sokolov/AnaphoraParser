@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
 sys.path.append('..')
@@ -13,7 +14,6 @@ def exec_command(package_path, file_name):
     input_file = package_path + '/tmp/maltparser/' + file_name
 
     output_path = package_path + '/tmp/res_maltparser/'
-    print('$$$$ output_file = ' + output_path)
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 

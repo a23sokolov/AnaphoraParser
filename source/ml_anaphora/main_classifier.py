@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 import _pickle as pickle
 import numpy as np
 from sklearn import preprocessing
+import os
 
 N_ITER = 7
 RANDOM_STATE = 42
@@ -37,16 +38,18 @@ class SparseClassifier():
     def predict(self, X):
         return self.classifier.predict(preprocessing.scale(self.reduce_dim.transform(X)))
 
-    def dump(self, folder):
+    def dump(self, folder, filename):
+        if not os.path.exists(folder):
+            os.makedirs(folder)
         pickle.dump((self.reduce_dim, self.classifier, self.n_components),
-                    open('{}/sparse_classifier.pkl'.format(folder), 'wb'))
+                    open('{}/{}'.format(folder, filename), 'wb'))
 
     @staticmethod
-    def load(folder):
+    def load(folder, filename):
         result = SparseClassifier()
         result.reduce_dim, \
         result.classifier, \
-        result.n_components = pickle.load(open('{}/sparse_classifier.pkl'.format(folder)))
+        result.n_components = pickle.load(open('{}/{}'.format(folder, filename), 'rb'))
         return result
 
 def main():
@@ -63,8 +66,9 @@ def main():
     sparse_classifier = SparseClassifier(n_components=N_class_feats)
     sparse_classifier.fit(X_train, y_true)
     print ('Precision on train: {}'.format(metrics.accuracy_score(y_true, sparse_classifier.predict(X_train))))
-    sparse_classifier.dump('./')
-    # sparse_classifier2 = SparseClassifier.load(u'.')
+    sparse_classifier.dump('model', 'sparse_classifier1.pkl')
+    sparse_classifier2 = SparseClassifier.load('model', 'sparse_classifier1.pkl')
+    print('[DUMP] Precision on train: {}'.format(metrics.accuracy_score(y_true, sparse_classifier2.predict(X_train))))
 
 def simple_check(X_MATRRIX, y_true, N_class_feats):
     from sklearn import metrics
@@ -88,9 +92,19 @@ def simple_check(X_MATRRIX, y_true, N_class_feats):
     print('predict Y = ' + str(y_predict))
     print('test Y = ' + str(y_test))
     print('=======================')
-    print('accuracy_score on train: {}'.format(metrics.accuracy_score(y_test, y_predict)))
-    print ('f1_score on train: {}'.format(metrics.f1_score(y_test, y_predict)))
+    accuracy = metrics.accuracy_score(y_test, y_predict)
+    f_meas = metrics.f1_score(y_test, y_predict)
+    print('accuracy_score on train: {}'.format(accuracy))
+    print ('f1_score on train: {}'.format(f_meas))
     print('precision_score on train: {}'.format(metrics.precision_score(y_test, y_predict)))
+    print('recall_score on train: {}'.format(metrics.recall_score(y_test, y_predict)))
+
+    # dump model
+    sparse_classifier.dump('model', 'model_{}.pkl'.format('acc-{0:.2f}'.format(accuracy) + '_fmeas-{0:.2f}'.format(f_meas)))
+    print('model dumped')
+
+def predict_on_created_model(X_MATRIX, y_true):
+    pass
 
 if __name__ == '__main__':
     main()
