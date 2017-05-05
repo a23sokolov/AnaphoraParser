@@ -175,7 +175,7 @@ class SentenceParser:
     def read(self, filename):
         self._file_name = filename
 
-        input_file = open(self._input_package + '/' +filename)
+        input_file = open(self._input_package + '/' + filename)
         self.parse(input_file)
         input_file.close()
 
