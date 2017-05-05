@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 import _pickle as pickle
 import numpy as np
 from sklearn import preprocessing
-import os
+import os, glob
 
 N_ITER = 7
 RANDOM_STATE = 42
@@ -70,21 +70,10 @@ def main():
     sparse_classifier2 = SparseClassifier.load('model', 'sparse_classifier1.pkl')
     print('[DUMP] Precision on train: {}'.format(metrics.accuracy_score(y_true, sparse_classifier2.predict(X_train))))
 
-def simple_check(X_MATRRIX, y_true, N_class_feats):
+
+def predict(y_test, X_test, sparse_classifier, dump=False):
     from sklearn import metrics
-    sparse_classifier = SparseClassifier(n_components=N_class_feats)
-
-    range = int(len(y_true) * 0.75)
-
-    X_train = X_MATRRIX[:range]
-    y_train = y_true[:range]
-
-    X_test = X_MATRRIX[range:]
-    y_test = y_true[range:]
-
-    sparse_classifier.fit(X_train, y_train)
     y_predict = sparse_classifier.predict(X_test)
-    print('X_MATRRIX.height = ' + str(len(X_MATRRIX)))
     print('predict.len = ' + str(len(y_predict)))
     print('test.len = ' + str(len(y_test)))
 
@@ -95,16 +84,38 @@ def simple_check(X_MATRRIX, y_true, N_class_feats):
     accuracy = metrics.accuracy_score(y_test, y_predict)
     f_meas = metrics.f1_score(y_test, y_predict)
     print('accuracy_score on train: {}'.format(accuracy))
-    print ('f1_score on train: {}'.format(f_meas))
+    print('f1_score on train: {}'.format(f_meas))
     print('precision_score on train: {}'.format(metrics.precision_score(y_test, y_predict)))
     print('recall_score on train: {}'.format(metrics.recall_score(y_test, y_predict)))
 
     # dump model
-    sparse_classifier.dump('model', 'model_{}.pkl'.format('acc-{0:.2f}'.format(accuracy) + '_fmeas-{0:.2f}'.format(f_meas)))
-    print('model dumped')
+    if dump:
+        sparse_classifier.dump('model', 'model_{}.pkl'.format('acc-{0:.2f}'.format(accuracy) + '_fmeas-{0:.2f}'.format(f_meas)))
+        print('model dumped')
+
+def train_predict(X_MATRIX, y_true, N_class_feats):
+    sparse_classifier = SparseClassifier(n_components=N_class_feats)
+
+    range = int(len(y_true) * 0.75)
+
+    X_train = X_MATRIX[:range]
+    y_train = y_true[:range]
+
+    X_test = X_MATRIX[range:]
+    y_test = y_true[range:]
+
+    sparse_classifier.fit(X_train, y_train)
+    predict(y_test, X_test, sparse_classifier, dump=True)
 
 def predict_on_created_model(X_MATRIX, y_true):
-    pass
+    # files = glob.glob('model/*.json')
+    sparse_classifier = SparseClassifier.load('model', 'model_acc_0.70_fmeas-0.42.pkl')
+    range = int(len(y_true) * 0.75)
+
+    X_test = X_MATRIX[range:]
+    y_test = y_true[range:]
+
+    predict(y_test, X_test, sparse_classifier)
 
 if __name__ == '__main__':
     main()

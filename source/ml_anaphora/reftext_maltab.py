@@ -320,14 +320,15 @@ def main():
     files = glob.glob('*.json')
     print('files to learn = ' + str(len(files)))
     os.chdir(current_path)
-    for file in files[:4]:
+    for file in files:
         print(file)
         sentence_parser = RefTextSentenceParser(data_to_learn, output_package=current_path)
         sentence_parser.read(file)
     print(os.getcwd())
     os.chdir(current_path)
     data_to_learn.print_vector()
-    main_classifier.simple_check(data_to_learn.train_matrix, data_to_learn.y_vector, 5)
+    # main_classifier.train_predict(data_to_learn.train_matrix, data_to_learn.y_vector, 5)
+    main_classifier.predict_on_created_model(data_to_learn.train_matrix, data_to_learn.y_vector)
 
 if __name__ == '__main__':
     main()
