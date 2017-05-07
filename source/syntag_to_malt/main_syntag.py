@@ -88,7 +88,7 @@ def main():
             out_sentences = []
             R = Reader()
             sentences = R.read(file)
-            for sentence in sentences[:3]:
+            for sentence in sentences:
                 _out_sentence = []
                 for word in sentence:
                     w = word[0] or 'FANTOM'
