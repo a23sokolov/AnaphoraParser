@@ -10,20 +10,11 @@ import sys
 sys.path.append('../sentence_to_malt')
 from maltparser_translater import SentenceParser
 sys.path.append('..')
-from config import npro_sample, PATH_REFTEXTS
-import script_maltparser_parse
+from config import npro_sample, PATH_REFTEXTS, syntax_list
+import script_maltparser
 import numpy as np
 import main_classifier
 
-syntax_list = ['пасс-анал', 'об-аппоз', 'дистанц', 'нум-аппоз', '1-компл', 'вводн', 'суб-обст', 'оп-аппоз', 'распред',
-                 '3-компл', '2-несобст-компл', None, 'сравнит', 'длительн', 'соч-союзн', 'уточн', 'сент-предик',
-                 'подч-союзн', 'релят', 'вспом', 'эксплет', '3-несобст-компл', 'электив', 'оп-опред', 'квазиагент',
-                 'колич-копред', 'сент-соч', 'соотнос', 'обст', 'композ', 'ном-аппоз', 'агент', 'сравн-союзн', 'аналит',
-                 '4-несобст-компл', 'суб-копр', 'инф-союзн', 'атриб', '1-несобст-компл', 'дат-сент', 'кратн', 'изъясн',
-                 'предик', '4-компл', 'несобст-агент', 'колич-огран', 'компл-аппоз', 'аддит', 'аппоз',
-                 'кратно-длительн', 'опред', 'предл', 'адр-присв', 'об-обст', 'примыкат', 'разъяснит', 'неакт-компл',
-                 'пролепт', 'об-копр', 'аппрокс-колич', 'обст-тавт', '5-компл', 'колич-вспом', 'огранич', 'количест',
-                 'сочин', 'дат-субъект', 'присвяз', '2-компл']
 morph_case_list = ['nom', 'gen', 'dat', 'acc', 'ins', 'prep', 'loc']
 distance_list = [10, 30, 1000]
 FEATURES_SIZE = 79
@@ -122,19 +113,16 @@ class RefTextSentenceParser:
         #----------------------------WriteInFile----------------------------
         self.write_anaphora()
 
-    #parse info about
+    # parse info about candidate after maltparser parse.
     def _find_cadidates(self):
-        script_maltparser_parse.exec_command(self._package_path, self._file_name_txt)
+        script_maltparser.prepare_to_parse(self._package_path, self._file_name_txt)
         input_file = open(self._package_path + '/tmp/res_maltparser/' + self._file_name_txt)
         self._malt_sentences = self.sentence_parser.read_malttab(input_file)
         print('sentences.start_pos = ' + str(list(map(lambda x: x.get_start_pos, self._malt_sentences))))
-        # print('\n'.join(map(lambda x: str(x), self._sentences)))
         self.noun_candidate = []
-        print ('$$$$self._anaphora_relationship = ' + str(self._anaphora_relationship))
         for pronoun in self._pronounces:
             # working only with anaphora marked pronounces
             if pronoun.get('position') in self._marked_pronounces:
-                print('$$$_pronoun = ' + str(pronoun))
                 self._filter_candidate(pronoun)
 
     # find candidate:
@@ -185,8 +173,6 @@ class RefTextSentenceParser:
         # add only 2 candidates
         # ==============
         if _candidate_list:
-            print('$$$_candidate_list.len = ' + str(len(_candidate_list)))
-            print('$$$$_candidate_list = ' + str(_candidate_list))
             current_candidate_list = _candidate_list
             selected_candidate_r = random.choice(current_candidate_list)
             while selected_candidate_r.get('position') - 1 in self._anaphora_relationship and len(current_candidate_list) > 1:
@@ -200,8 +186,6 @@ class RefTextSentenceParser:
                     real_ana = selected_cadidate_real
                     break
             new_list = [real_ana, selected_candidate_r] if real_ana and len(current_candidate_list) > 1 else [selected_candidate_r]
-            print('$$$real_ana = ' + str(real_ana) + ', selected_candidate_r = ' + str(selected_candidate_r))
-            print('$$$new_list = ' + str(new_list))
             self.noun_candidate.extend(new_list)
         # ==============
 

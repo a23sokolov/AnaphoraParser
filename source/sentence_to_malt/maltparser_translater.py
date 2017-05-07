@@ -224,6 +224,8 @@ class SentenceParser:
                 continue
             res_word = (self._parse_word_malt_tab(word))
             _sentence.append(res_word)
+        if _sentence:
+            _sentences.append(ParsedSentence(_sentence, start_pos, position))
         return _sentences
 
     def _parse_word_malt_tab(self, word_malt_tab):

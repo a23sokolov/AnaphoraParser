@@ -66,6 +66,8 @@ def main():
     os.chdir(path)
     print(str(path))
     files = glob.glob('*.tgt')
+    if not files:
+        files = glob.glob('*/*.tgt')
     limit = options.number if options.number else len(files)
     print(len(files))
 
@@ -75,7 +77,7 @@ def main():
     R = Reader()
 
     with progress.Bar(label="Progress", expected_size=limit) as bar:
-        for file in files[: limit]:
+        for file in files:
             print(file)
             if not options.debug:
                 if i % step or i + 1 == limit:
@@ -86,7 +88,7 @@ def main():
             out_sentences = []
             R = Reader()
             sentences = R.read(file)
-            for sentence in sentences:
+            for sentence in sentences[:3]:
                 _out_sentence = []
                 for word in sentence:
                     w = word[0] or 'FANTOM'
