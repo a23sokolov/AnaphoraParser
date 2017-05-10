@@ -35,10 +35,10 @@ if __name__ == '__main__':
     # file_name = 'test.txt'
     # exec_command(os.getcwd(), file_name)
 
-    #learn maltparser
-        # input_file = os.getcwd() + '/syntag_to_malt/result/model.txt'
-        # learn_classifier(input_file)
+    # learn maltparser
+    # input_file = os.getcwd() + '/syntag_to_malt/result/model.txt'
+    # learn_classifier(input_file)
 
     # PREPARE DATA FOR TEST
-        # output_file = os.getcwd() + '/syntag_to_malt/quality_test/res_model.txt'
-        # parse_text(input_file, output_file)
+    # output_file = os.getcwd() + '/syntag_to_malt/quality_test/res_model.txt'
+    # parse_text(input_file, output_file)

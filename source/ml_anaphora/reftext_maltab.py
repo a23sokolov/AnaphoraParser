@@ -38,6 +38,7 @@ class RefTextSentenceParser:
         self.data_to_learn.vectorize_data(noun_candidate=self.noun_candidate, anaphora_relationship=self._anaphora_relationship)
 
     #prepare data to maltparser, write in file package ./tmp/maltparser/{file_name}
+    #also take all pronounces with anaphora True
     def _parse_sentences(self, sentences):
         self._sentences = []
         self._pronounces = []
@@ -118,10 +119,10 @@ class RefTextSentenceParser:
         script_maltparser.prepare_to_parse(self._package_path, self._file_name_txt)
         input_file = open(self._package_path + '/tmp/res_maltparser/' + self._file_name_txt)
         self._malt_sentences = self.sentence_parser.read_malttab(input_file)
-        print('sentences.start_pos = ' + str(list(map(lambda x: x.get_start_pos, self._malt_sentences))))
+        print('sentences.start_pos = ' + str(list(map(lambda x: x.get_start_pos(), self._malt_sentences))))
         self.noun_candidate = []
         for pronoun in self._pronounces:
-            # working only with anaphora marked pronounces
+            # working only with anaphora marked pronounces from dictionary in @file:config.py.
             if pronoun.get('position') in self._marked_pronounces:
                 self._filter_candidate(pronoun)
 
@@ -133,12 +134,12 @@ class RefTextSentenceParser:
         _pronoun_sentence = self._malt_sentences[pronoun.get('sent_id')]
         _pronoun = _pronoun_sentence.get_word(pronoun.get('word_id'))
         _pronoun_position = _pronoun_sentence.get_start_pos() + pronoun.get('word_id')
-        _pronoun_gender = _pronoun.get('morph').split('.')[1] if len(_pronoun.get('morph').split('.')) == 5 else None
-        _pronoun_quantity = _pronoun.get('morph').split('.')[3 if len(_pronoun.get('morph').split('.')) == 5 else 2]
+        _pronoun_gender = _pronoun.get('morph').split('.')[1] if len(_pronoun.get('morph').split('.')) == 4 else None
+        _pronoun_quantity = _pronoun.get('morph').split('.')[3 if len(_pronoun.get('morph').split('.')) == 4 else 2]
 
         #  *DEBUG*
         # print(pronoun)
-        print('founded pronoun = ' + str(_pronoun))
+        # print('founded pronoun = ' + str(_pronoun) + ', _pronoun_gender = ' + str(_pronoun_gender) + ', _pronoun_quantity = ' + str(_pronoun_quantity))
         # print('========================================================================')
 
         pronoun_sentence_id = pronoun.get('sent_id') + 1
@@ -157,20 +158,22 @@ class RefTextSentenceParser:
                 _current_word_syntax_check = (self._find_parent_syntax_tree(sentence, word) != pronoun_parent)
                 _current_word_gender_quantity = _current_word_morph_check \
                                                 and (not _pronoun_gender or _current_word_morph.split('.')[1] == _pronoun_gender)\
-                                                and _current_word_morph.split('.')[2] == _pronoun_quantity
-                if _current_word_is_not_pronoun and _current_word_morph_check and _current_word_syntax_check and _current_word_gender_quantity:
-                    _current_word_position = sentence.get_start_pos() + _current_word_position_in_sentence
-                    _distance = _pronoun_position - _current_word_position
+                                                and _current_word_morph.split('.')[3 if len(_current_word_morph.split('.')) == 4 else 2] == _pronoun_quantity
+                _current_word_position = sentence.get_start_pos() + _current_word_position_in_sentence
+                _distance = _pronoun_position - _current_word_position
+                if _current_word_is_not_pronoun and _current_word_morph_check and _current_word_syntax_check and _current_word_gender_quantity and _distance > 0 \
+                        or _current_word_position - 1 in self._anaphora_relationship: # FIXME: HACK to take right candidate ignoring filter result.
                     _word = dict(word)
                     _word['distance'] = _distance
                     _word['position'] = _current_word_position
                     _candidate_list.append(_word)
 
         # *DEBUG*
+        # print('------------------------_candidate_list---------------------------------')
         # print('\n'.join(map(lambda x: str(x), _candidate_list)))
         # print('------------------------------------------------------------------------')
 
-        # add only 2 candidates
+        # add only 2 candidates: right and not_right. Else would be added only not_right.
         # ==============
         if _candidate_list:
             current_candidate_list = _candidate_list
@@ -179,11 +182,11 @@ class RefTextSentenceParser:
                 current_candidate_list.remove(selected_candidate_r)
                 selected_candidate_r = random.choice(current_candidate_list)
             real_ana = None
-            for selected_cadidate_real in _candidate_list:
-                if not selected_cadidate_real.get('position') - 1 in self._anaphora_relationship:
+            for selected_candidate_real in _candidate_list:
+                if not selected_candidate_real.get('position') - 1 in self._anaphora_relationship:
                     continue
                 else:
-                    real_ana = selected_cadidate_real
+                    real_ana = selected_candidate_real
                     break
             new_list = [real_ana, selected_candidate_r] if real_ana and len(current_candidate_list) > 1 else [selected_candidate_r]
             self.noun_candidate.extend(new_list)
@@ -247,7 +250,7 @@ class DataToLearn:
     def vectorize_data(self, noun_candidate, anaphora_relationship):
         offset_distance = 0
         offset_case = 3
-        offset_syntax = 10
+        offset_syntax = 9
 
         # DEBUG
         # print('==================================')
@@ -275,7 +278,7 @@ class DataToLearn:
 
             # case features set
             morph_list = candidate.get('morph').split('.')
-            morph_case = morph_list[len(morph_list) - 1] if len(morph_list) > 0 else ''
+            morph_case = morph_list[len(morph_list) - 2] if len(morph_list) > 0 else ''
             if morph_case in morph_case_list:
                 candidate_vector[0][offset_case + morph_case_list.index(morph_case)] = 1
 

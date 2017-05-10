@@ -11,9 +11,12 @@ from config import syntax_list
 # HOW TO USE:
 # 1) first of all train MaltParser.
 # 2) Prepare data for test, start main_syntag with package or part of SyntagRus. Right data set.
-# 3) Start this script. Script will create predicted data set in folder "quality_test".
+# 3) Start this script. with
+#                       test_pure: clear test SyntagRus result maltparser classifier.
+#                       test_morph_analyze: test with pymorphy2 morph description words.
+# Script will create predicted data set in folder "quality_test".
 
-
+#TODO create morphological test, it will be compare SyntagRus and pymorphy2 res.
 def _vectorize_data(sentences):
     '''
     :param sentences: list of maltparser_translate.ParsedSentence
@@ -56,7 +59,7 @@ def _prepare_morph_mark():
     sentence_parser.write_data(_new_sentences, _file_name_txt, package_path)
 
 def test_body(test_file_path, input_file_path, output_file_path):
-    n_times = 5
+    n_times = 1
     n_samples = []
     sentence_parser = SentenceParser()
     print('---------- create right_matrix ----------')
@@ -104,3 +107,4 @@ if __name__ == '__main__':
     if not os.path.exists(output_folder_path):
         os.makedirs(output_folder_path)
     test_morph_analyze()
+    # test_pure()

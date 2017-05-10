@@ -50,7 +50,9 @@ feat_ru_en = {
 	'ВИН': 'acc',
 	'ТВОР': 'ins',
 	'ПР': 'prep',
-	'ПАРТ': 'gen2',
+	# updated
+	'ПАРТ': 'gen',
+	# 'ПАРТ': 'gen2',
 	'МЕСТН': 'loc',
 
 	'ИЗЪЯВ': 'real',
@@ -113,6 +115,10 @@ class Reader:
 			if 'inf' in feat:
 				pos = 'VINF'
 				feat -= {'inf'}
+
+			# remove incorrect person from imperative verb
+			if 'imp' in feat:
+				feat -= {'2p'}
 			
 			self._info = word_t(lemma=lemma, pos=pos, feat=feat, id=int(attr['ID']), dom=dom, link=link)
 			self._cdata = ''

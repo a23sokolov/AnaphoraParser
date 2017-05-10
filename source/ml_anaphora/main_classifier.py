@@ -109,7 +109,9 @@ def train_predict(X_MATRIX, y_true, N_class_feats):
 
 def predict_on_created_model(X_MATRIX, y_true):
     # files = glob.glob('model/*.json')
-    sparse_classifier = SparseClassifier.load('model', 'model_acc_0.70_fmeas-0.42.pkl')
+    # sparse_classifier = SparseClassifier.load('model', 'model_acc-0.70_fmeas-0.42.pkl')
+    # sparse_classifier = SparseClassifier.load('model', 'model_acc-0.71_fmeas-0.60.pkl')
+    sparse_classifier = SparseClassifier.load('model', 'model_acc-0.72_fmeas-0.64.pkl')
     range = int(len(y_true) * 0.75)
 
     X_test = X_MATRIX[range:]

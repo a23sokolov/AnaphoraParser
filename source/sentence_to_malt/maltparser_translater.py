@@ -8,6 +8,15 @@ import os
 sys.path.append('..')
 from config import npro_sample
 
+selected_feat = {'m', 'f', 'n', # род(муж, жен, средний, общий**)
+				 'sg', 'pl', # число(ед, мн)
+				 '1p', '2p', '3p', # лицо(1-ое, 2-ое, 3-ье)
+				 'nom', 'gen', 'gen2', 'dat', 'acc', 'ins', 'prep', 'loc', # падежи. gen2 партитивный падеж, loc - местный падеж более подробно pamjatka.
+				 'real', 'imp', # наклонение (изъяв, пов)
+				 'pass', # залог (страдательный)
+				 'comp', # степень(сравнительная, превосходная) сравнения только сравнительная
+				 'shrt' # краткость (прилагательные, причастия)
+                 }
 
 normalize_speech_part = {
     # части речи
@@ -63,7 +72,7 @@ normalize_features = {
     # нестандартные грамемы
     'LATN': '', # Токен состоит из латинских букв (например, “foo-bar” или “Maßstab”)
     'PNCT': '', # Пунктуация (например, , или !? или …)
-    #ignored
+    # ignored feature
     #'NUMB': 'NUM', # Число (например, “204” или “3.14”)
     #'intg': 'NUM', # целое число (например, “204”)
     #'real': 'NUM', # вещественное число (например, “3.14”)
@@ -71,7 +80,7 @@ normalize_features = {
     'UNKN' : '', # Токен не удалось разобрать todo: DONE '' change to fantom. some error.
 
     # Вид
-    # ignored.
+    # ignored feature
     # 'perf' : 'perf', # совершенный вид
     # 'impf' : 'imperf', # несовершенный вид
 
@@ -85,7 +94,7 @@ normalize_features = {
     '3per': '3p', # 3 лицо (читает)
 
     # Время
-    #ignored
+    # ignored feature
     #'pres': 'prs', # настоящее время (читаю)
     #'past': 'pst', # прошедшее время (читал)
     #'futr': 'npst', # будущее время прочитаю (прочитаю), в синтагрус читаю относится к этой категории, а в pymorphy2 к pres
@@ -99,13 +108,16 @@ normalize_features = {
     # excl говорящий не включён в действие (иди, идите)	INvl
 
     # Залог
-    'actv': '', # действительный залог, Не проставляется в СинтагРус, мы тоже игнорим
+    # ignored
+    # 'actv': 'actv', # действительный залог, Не проставляется в СинтагРус, мы тоже игнорим
     'pssv': 'pass', # страдательный залог (книга прочитана)
 
     # степень сравнения
     # сравнительная степени сделана с помощью part of speech COMP.
     'Supr':'supl', #  Превосходная форма есть
-    'comp':'comp' # сравнительная форма
+    # added feature
+    'comp':'comp', # сравнительная форма
+    'shrt':'shrt' # шорт форма.
 
 }
 # todo: add another params in table link https://pymorphy2.readthedocs.io/en/latest/user/grammemes.html#grammeme-docs
@@ -154,26 +166,32 @@ class SentenceParser:
         npro = False
 
         # rule exceptions
-        if pos == 'ADJS':
+        if pos in ['ADJS', 'PRTS']:
             features.append('shrt')
 
         # return comp form
         if pos == 'COMP':
             features.append('comp')
 
-        # will be used only for anaphora, else will be ignored.
-        if pos =='NPRO' and word in npro_sample:
-            npro = True
+        if pos =='NPRO':
+            # will be used only for anaphora, else will be ignored.
+            if word in npro_sample:
+                npro = True
 
+            # remove person for npro, as in SyntagRus
+            features = [_feature for _feature in features if _feature not in ['1per', '2per', '3per']]
         # change pos to normalized part of speech
         if pos in normalize_speech_part:
             pos = normalize_speech_part[pos]
 
         # change features to normal names and ignore another
-        normalized_features = []
+        normalized_features = set()
         for i in range(0, len(features)):
             if features[i] in normalize_features:
-                normalized_features.append(normalize_features[features[i]])
+                normalized_features.add(normalize_features[features[i]])
+
+        # order features on alphabet
+        normalized_features = sorted(normalized_features & selected_feat)
 
         return word_t(lemma=lemma, pos=pos, feat=normalized_features, NPRO=npro)
 
