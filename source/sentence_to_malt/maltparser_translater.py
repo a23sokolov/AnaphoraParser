@@ -2,11 +2,13 @@
 import json
 import re
 from collections import namedtuple
+from nltk.tokenize import sent_tokenize
+from nltk.tokenize import word_tokenize
 import pymorphy2 # @todo: add in requirements
 import sys
 import os
 sys.path.append('..')
-from config import npro_sample
+from config import npro_sample, word_to_ignore
 
 selected_feat = {'m', 'f', 'n', # род(муж, жен, средний, общий**)
 				 'sg', 'pl', # число(ед, мн)
@@ -149,11 +151,12 @@ class SentenceParser:
     def _split_article(self, article):
         # TODO: simple regex splitter. may be should use nltk splitter.
         sentences = article.get('text')
-        sentences = re.split("(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\!)\s", sentences)
+        sentences = sent_tokenize(sentences)
         for sentence in sentences:
-            sentence_words = sentence.split(' ')
+            sentence_words = word_tokenize(sentence)
             for word in sentence_words:
-                self._sentence.append(self.morph_analyze_malt_tab(word))
+                if not word in word_to_ignore:
+                    self._sentence.append(self.morph_analyze_malt_tab(word))
             self._sentences.append(self._sentence)
             self._sentence = []
 

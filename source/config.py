@@ -6,6 +6,9 @@ PATH_ARTICLES = '/Users/alexey/Desktop/Diploma/DepartmentOfInfTech/Source/Syntax
 # will be working only with pronouns 3= person
 npro_sample = ['он', 'она', 'оно', 'они']
 
+# list to ignore word
+word_to_ignore = ['.', '?', '!', '...', '"', ',', '`', '``', '\'', '-']
+
 
 
 # CONST NOT FOR CHANGE

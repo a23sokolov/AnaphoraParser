@@ -15,6 +15,6 @@ if __name__ == '__main__':
     os.chdir(PATH_ARTICLES)
     files = glob.glob('*.txt')
     os.chdir(current_path)
-    for file in files:
+    for file in files[1:2]:
         sentence_parser.read(file)
         script_maltparser.prepare_to_parse(os.getcwd(), file)

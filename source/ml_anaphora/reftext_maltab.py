@@ -82,7 +82,7 @@ class RefTextSentenceParser:
         for relation in relation_info:
             #----------------------------HEAD----------------------------
             _rel_head = relation.get('RelationHead')
-            # todo: take only one world array Example: 'Михаил Леонович Гаспаров' => take first word in chain
+            # FIXME: take only one world array Example: 'Михаил Леонович Гаспаров' => take first word in chain
             head_word = _rel_head.get('Words')[0]
             anaphora_offset = self._sentence_offset[head_word.get('SentIndex')] + head_word.get('WordIndex')
 
@@ -93,7 +93,7 @@ class RefTextSentenceParser:
             _anaphora_rel['values'] = []
             for pretender in _rel_part_array:
                 _word_pretenders = pretender.get('Words')
-                # todo: work only with one anaphora word, and ignore not correct data.
+                # FIXME: work only with one anaphora word, and ignore not correct data.
                 if not _word_pretenders:
                     print(pretender)
                     continue
@@ -240,8 +240,8 @@ class DataToLearn:
     #       [0,1,0] distance less 30
     #       [0,0,1] another
     # morph
-    #       [1] is S @todo: should depends on part of speech, right now ignored
-    #       [1,0,0] is m, [0,1,0] is f, [0,0,1] is n @todo: should be ignored because filter decide this problem
+    #       [1] is S ignore because filter decide this problem
+    #       [1,0,0] is m, [0,1,0] is f, [0,0,1] is n ignore because filter decide this problem
     #       [1,0,0,0,0,0] nom, [0,1,0,0,0,0] gen, [0,0,1,0,0,0] dat,
     #       [0,0,0,1,0,0] acc, [0,0,0,0,1,0] ins, [0,0,0,0,0,1] prep
     # syntax
@@ -250,7 +250,7 @@ class DataToLearn:
     def vectorize_data(self, noun_candidate, anaphora_relationship):
         offset_distance = 0
         offset_case = 3
-        offset_syntax = 9
+        offset_syntax = offset_case
 
         # DEBUG
         # print('==================================')
@@ -277,10 +277,10 @@ class DataToLearn:
                 candidate_vector[0][offset_distance + distance_list.index(distance)] = 1
 
             # case features set
-            morph_list = candidate.get('morph').split('.')
-            morph_case = morph_list[len(morph_list) - 2] if len(morph_list) > 0 else ''
-            if morph_case in morph_case_list:
-                candidate_vector[0][offset_case + morph_case_list.index(morph_case)] = 1
+            # morph_list = candidate.get('morph').split('.')
+            # morph_case = morph_list[len(morph_list) - 2] if len(morph_list) > 0 else ''
+            # if morph_case in morph_case_list:
+            #     candidate_vector[0][offset_case + morph_case_list.index(morph_case)] = 1
 
             # syntax features set
             syntax = candidate.get('syntax')
@@ -314,8 +314,8 @@ def main():
     print(os.getcwd())
     os.chdir(current_path)
     data_to_learn.print_vector()
-    # main_classifier.train_predict(data_to_learn.train_matrix, data_to_learn.y_vector, 5)
-    main_classifier.predict_on_created_model(data_to_learn.train_matrix, data_to_learn.y_vector)
+    main_classifier.train_predict(data_to_learn.train_matrix, data_to_learn.y_vector, 5)
+    # main_classifier.predict_on_created_model(data_to_learn.train_matrix, data_to_learn.y_vector)
 
 if __name__ == '__main__':
     main()
