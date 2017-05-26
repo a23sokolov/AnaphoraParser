@@ -1,4 +1,4 @@
-# SyntaxParser
+# AnaphoraParser
   Is programm module for anaphora resolution based on morphological, syntactic and collocation knowledge. It has been proven 
   to be efficient by a set of experiments. Current Module consist of 3 undependencies part: SyntaxTraining(syntag_to_malt),
   SyntaxParsing(sentence_to_malt), Anaphora(ml_anaphora).
