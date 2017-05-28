@@ -93,6 +93,8 @@ def predict(y_test, X_test, sparse_classifier, dump=False):
         sparse_classifier.dump('model', 'model_{}.pkl'.format('acc-{0:.2f}'.format(accuracy) + '_fmeas-{0:.2f}'.format(f_meas)))
         print('model dumped')
 
+    return y_predict
+
 def train_predict(X_MATRIX, y_true, N_class_feats):
     sparse_classifier = SparseClassifier(n_components=N_class_feats)
 
@@ -107,17 +109,17 @@ def train_predict(X_MATRIX, y_true, N_class_feats):
     sparse_classifier.fit(X_train, y_train)
     predict(y_test, X_test, sparse_classifier, dump=True)
 
-def predict_on_created_model(X_MATRIX, y_true):
+def predict_on_created_model(X_MATRIX, y_true, percent):
     # files = glob.glob('model/*.json')
-    # sparse_classifier = SparseClassifier.load('model', 'model_acc-0.70_fmeas-0.42.pkl')
     # sparse_classifier = SparseClassifier.load('model', 'model_acc-0.71_fmeas-0.60.pkl')
     sparse_classifier = SparseClassifier.load('model', 'model_acc-0.72_fmeas-0.64.pkl')
-    range = int(len(y_true) * 0.75)
+    range = int(len(y_true) * percent)
 
     X_test = X_MATRIX[range:]
     y_test = y_true[range:]
 
-    predict(y_test, X_test, sparse_classifier)
+    return predict(y_test, X_test, sparse_classifier)
+
 
 if __name__ == '__main__':
     main()

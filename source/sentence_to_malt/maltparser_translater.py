@@ -2,8 +2,7 @@
 import json
 import re
 from collections import namedtuple
-from nltk.tokenize import sent_tokenize
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import sent_tokenize,word_tokenize
 import pymorphy2 # @todo: add in requirements
 import sys
 import os

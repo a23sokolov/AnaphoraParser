@@ -10,14 +10,20 @@ import sys
 sys.path.append('../sentence_to_malt')
 from maltparser_translater import SentenceParser
 sys.path.append('..')
-from config import npro_sample, PATH_REFTEXTS, syntax_list
+from config import npro_sample, PATH_REFTEXTS, PATH_ARTICLES, syntax_list, word_to_ignore
 import script_maltparser
 import numpy as np
 import main_classifier
+from nltk.tokenize import sent_tokenize,word_tokenize
 
 morph_case_list = ['nom', 'gen', 'dat', 'acc', 'ins', 'prep', 'loc']
 distance_list = [10, 30, 1000]
 FEATURES_SIZE = 79
+
+# WORK_WITH_PLAIN_TEXT
+WORK_WITH_PLAIN_TEXT = False
+PATH_TO_FILE = PATH_ARTICLES if WORK_WITH_PLAIN_TEXT else PATH_REFTEXTS
+EXTENSION = '*.txt' if WORK_WITH_PLAIN_TEXT else '*.json'
 
 class RefTextSentenceParser:
 
@@ -32,38 +38,57 @@ class RefTextSentenceParser:
 
         # todo: maybe should be add feautures depends on Signs : {',';'!';etc.};
         # position => column index
-        self._parse_sentences(sentences)
+        self._parse_sentences(sentences, (lambda sentence: sentence.get('Words')), (lambda word: word.get('Value')))
         self._parse_marked_info(relation_info)
         self._find_cadidates()
         self.data_to_learn.vectorize_data(noun_candidate=self.noun_candidate, anaphora_relationship=self._anaphora_relationship)
 
-    #prepare data to maltparser, write in file package ./tmp/maltparser/{file_name}
-    #also take all pronounces with anaphora True
-    def _parse_sentences(self, sentences):
+    def parse_plain_text(self, opened_file):
+        data = json.load(opened_file)
+
         self._sentences = []
         self._pronounces = []
         # array with sentence offset, will be used for save anaphora position.
         self._sentence_offset = {}
-        sentence_position = 0
+        sentences = []
+        for article in data:
+            _sentences = article.get('text')
+            sentences.extend(sent_tokenize(_sentences))
+
+        self._parse_sentences(sentences, (lambda sentence: word_tokenize(sentence)), (lambda word: word))
+        self._find_cadidates()
+        self.data_to_learn.vectorize_data(noun_candidate=self.noun_candidate, anaphora_relationship=defaultdict(list), file_name=self._file_name_txt)
+
+    # prepare data to maltparser, write in file package ./tmp/maltparser/{file_name}
+    # also take all pronounces with anaphora True
+    def _parse_sentences(self, sentences, get_words, get_word):
+        self._sentences = []
+        self._pronounces = []
+        # array with sentence offset, will be used for save anaphora position.
+        self._sentence_offset = {}
+        sentence_index = 0
         previous_offset = 0
         for sentence in sentences:
             self._sentence = []
-            words_in_sentence = sentence.get('Words')
-            sentence_index = sentence.get('Index')
+            words_in_sentence = get_words(sentence)
+            word_index = 0
             for word in words_in_sentence:
-                _parsed_word = self.sentence_parser.morph_analyze_malt_tab(word.get('Value'))
+                if word in word_to_ignore:
+                    continue
+                _parsed_word = self.sentence_parser.morph_analyze_malt_tab(get_word(word))
                 _pronounce = {}
                 if _parsed_word.NPRO:
                     _pronounce['position'] = previous_offset + len(self._sentence)
                     _pronounce['sent_id'] = sentence_index
-                    _pronounce['word_id'] = word.get('Index')
+                    _pronounce['word_id'] = word_index
                     self._pronounces.append(_pronounce)
                 self._sentence.append(_parsed_word)
+                word_index += 1
             self._sentences.append(self._sentence)
 
-            self._sentence_offset[sentence_position] = previous_offset
+            self._sentence_offset[sentence_index] = previous_offset
             previous_offset = previous_offset + len(self._sentence) + 1
-            sentence_position += 1
+            sentence_index += 1
 
         package_path = self._package_path + '/tmp/maltparser'
 
@@ -123,7 +148,7 @@ class RefTextSentenceParser:
         self.noun_candidate = []
         for pronoun in self._pronounces:
             # working only with anaphora marked pronounces from dictionary in @file:config.py.
-            if pronoun.get('position') in self._marked_pronounces:
+            if not hasattr(self, '_marked_pronounces') or pronoun.get('position') in self._marked_pronounces:
                 self._filter_candidate(pronoun)
 
     # find candidate:
@@ -162,7 +187,7 @@ class RefTextSentenceParser:
                 _current_word_position = sentence.get_start_pos() + _current_word_position_in_sentence
                 _distance = _pronoun_position - _current_word_position
                 if _current_word_is_not_pronoun and _current_word_morph_check and _current_word_syntax_check and _current_word_gender_quantity and _distance > 0 \
-                        or _current_word_position - 1 in self._anaphora_relationship: # FIXME: HACK to take right candidate ignoring filter result.
+                        or (hasattr(self, '_anaphora_relationship') and _current_word_position - 1 in self._anaphora_relationship): # FIXME: HACK to take right candidate ignoring filter result.
                     _word = dict(word)
                     _word['distance'] = _distance
                     _word['position'] = _current_word_position
@@ -174,8 +199,13 @@ class RefTextSentenceParser:
         # print('------------------------------------------------------------------------')
 
         # add only 2 candidates: right and not_right. Else would be added only not_right.
-        # ==============
-        if _candidate_list:
+        # selected_candidate_r - random candidate not right
+        # selected_candidate_real - right candidate
+        # @TODO: sould be optimized
+        # comment when work with plain text
+
+        if not WORK_WITH_PLAIN_TEXT and _candidate_list:
+            # ==============
             current_candidate_list = _candidate_list
             selected_candidate_r = random.choice(current_candidate_list)
             while selected_candidate_r.get('position') - 1 in self._anaphora_relationship and len(current_candidate_list) > 1:
@@ -190,9 +220,11 @@ class RefTextSentenceParser:
                     break
             new_list = [real_ana, selected_candidate_r] if real_ana and len(current_candidate_list) > 1 else [selected_candidate_r]
             self.noun_candidate.extend(new_list)
-        # ==============
-
-        # self.noun_candidate.extend(_candidate_list)
+            # ==============
+        else:
+            # ==============
+            self.noun_candidate.extend(_candidate_list)
+            # ==============
 
 
     # find verb group for word
@@ -221,18 +253,24 @@ class RefTextSentenceParser:
         json.dump(self._pronounces, out_file)
         out_file.close()
 
-    def read(self, file_name):
+    def read(self, folder_path, file_name):
         self.sentence_parser = SentenceParser()
         self._file_name_json = file_name
-        input_file = open(PATH_REFTEXTS + '/' + file_name)
+        input_file = open(folder_path + '/' + file_name)
         self._file_name_txt = file_name.replace('.json', '.txt')
-        self.parse(input_file)
+        if WORK_WITH_PLAIN_TEXT:
+            self.parse_plain_text(input_file)
+        else:
+            self.parse(input_file)
         input_file.close()
 
 class DataToLearn:
-    def __init__(self):
+    def __init__(self, path):
         self.train_matrix = np.zeros(shape=(0, FEATURES_SIZE), dtype='float32')
         self.y_vector = np.zeros(shape=(0, 0), dtype='float32')
+        if not os.path.exists(path + '/tmp'):
+            os.makedirs(path + '/tmp')
+        self.vectorize_data_file = open(path + '/tmp/vectorize.txt', 'w')
 
     # syntax all relationship
     # distance range
@@ -247,7 +285,7 @@ class DataToLearn:
     # syntax
     #       vector of 69 positions
     # vector size 3 + 6 + 69 = 78 = FEATURES_SIZE
-    def vectorize_data(self, noun_candidate, anaphora_relationship):
+    def vectorize_data(self, noun_candidate, anaphora_relationship, file_name=None):
         offset_distance = 0
         offset_case = 3
         offset_syntax = offset_case
@@ -260,6 +298,10 @@ class DataToLearn:
         # create empty matrix to concatenate in future.
         y_vector = np.zeros(shape=(1, len(noun_candidate)), dtype='float32')
 
+        print('======================')
+        if file_name:
+            self.vectorize_data_file.write(file_name + '\n')
+            self.vectorize_data_file.write('\n'.join(map(lambda x: str(x), noun_candidate)))
         print('\n'.join(map(lambda x: str(x), noun_candidate)))
         print('======================')
         print(anaphora_relationship)
@@ -299,23 +341,26 @@ class DataToLearn:
         print(self.y_vector)
 
 
-def main():
-    data_to_learn = DataToLearn()
+def main(path, extention):
     current_path = os.getcwd()
     print (current_path)
-    os.chdir(PATH_REFTEXTS)
-    files = glob.glob('*.json')
+    os.chdir(path)
+    files = glob.glob(extention)
     print('files to learn = ' + str(len(files)))
     os.chdir(current_path)
-    for file in files:
+
+    data_to_learn = DataToLearn(current_path)
+    for file in files[3:4]:
         print(file)
         sentence_parser = RefTextSentenceParser(data_to_learn, output_package=current_path)
-        sentence_parser.read(file)
+        sentence_parser.read(path, file)
     print(os.getcwd())
     os.chdir(current_path)
     data_to_learn.print_vector()
-    main_classifier.train_predict(data_to_learn.train_matrix, data_to_learn.y_vector, 5)
-    # main_classifier.predict_on_created_model(data_to_learn.train_matrix, data_to_learn.y_vector)
+    # main_classifier.train_predict(data_to_learn.train_matrix, data_to_learn.y_vector, 5)
+
+    main_classifier.predict_on_created_model(data_to_learn.train_matrix, data_to_learn.y_vector, 0)
+
 
 if __name__ == '__main__':
-    main()
+    main(PATH_TO_FILE, EXTENSION)
